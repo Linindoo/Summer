@@ -90,20 +90,19 @@ public class SummerRouter {
                 p = PathParamConverter.converter(p);
                 p =addContextPath(p);
                 Route route=null;
-                if (methodInfo.getHttpMethod()== null){
+                if (methodInfo.getHttpMethod() == null) {
                     route = router.route(p);
-                }else
-                if (methodInfo.getHttpMethod()== GET.class){
+                } else if (methodInfo.getHttpMethod() == GET.class) {
                     route = router.get(p);
-                }else if (methodInfo.getHttpMethod()== POST.class){
+                } else if (methodInfo.getHttpMethod() == POST.class) {
                     route = router.post(p);
-                }else if (methodInfo.getHttpMethod()== PUT.class){
+                } else if (methodInfo.getHttpMethod() == PUT.class) {
                     route = router.put(p);
-                }else if (methodInfo.getHttpMethod()== DELETE.class){
+                } else if (methodInfo.getHttpMethod() == DELETE.class) {
                     route = router.delete(p);
-                }else if (methodInfo.getHttpMethod()== OPTIONS.class){
+                } else if (methodInfo.getHttpMethod() == OPTIONS.class) {
                     route = router.options(p);
-                }else if (methodInfo.getHttpMethod()== HEAD.class){
+                } else if (methodInfo.getHttpMethod() == HEAD.class) {
                     route = router.head(p);
                 }
                 if (methodInfo.isBlocking()){
