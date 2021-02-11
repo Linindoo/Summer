@@ -83,7 +83,7 @@ public class SummerServer  {
         @Override
         public void start() throws Exception {
             vertx.createHttpServer()
-                    .requestHandler(router::accept)
+                    .requestHandler(router)
                     .listen(port,host,httpServerAsyncResult -> {
                         if (httpServerAsyncResult.succeeded()){
                             System.out.println("listen at: http://"+host+":"+port);

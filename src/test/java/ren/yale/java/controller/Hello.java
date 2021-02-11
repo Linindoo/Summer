@@ -46,7 +46,7 @@ public class Hello {
     @Path("/async")
     public void h3(@Context HttpServerResponse response, @Context Vertx vertx){
 
-        vertx.eventBus().send("user",EventMessage.message("bob").setKey("name"),message->{
+        vertx.eventBus().request("user",EventMessage.message("bob").setKey("name"),message->{
             EventMessage eventMessage = (EventMessage) message.result().body();
            if (eventMessage.isSuccess()){
                String ret= String.format("name:%s,age:%d",eventMessage.getMessage(),18);

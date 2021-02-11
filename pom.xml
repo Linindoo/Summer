@@ -31,7 +31,7 @@
 
 
   <properties>
-    <vertx.version>3.5.4</vertx.version>
+    <vertx.version>4.0.2</vertx.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 

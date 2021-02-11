@@ -10,7 +10,6 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.CookieHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import org.apache.logging.log4j.LogManager;
@@ -23,9 +22,6 @@ import ren.yale.java.tools.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
 import java.io.ByteArrayOutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -66,8 +62,7 @@ public class SummerRouter {
     }
     private void init(){
         router.route().handler(BodyHandler.create());
-        router.route().handler(CookieHandler.create());
-        SessionHandler handler = SessionHandler.create(LocalSessionStore.create(vertx));
+        SessionHandler handler = SessionHandler.create(LocalSessionStore.create(vertx)).setCookieless(true);
         handler.setNagHttps(true);
         router.route().handler(handler);
     }
@@ -242,15 +237,15 @@ public class SummerRouter {
 
     }
 
-    private String convert2XML(Object object) throws JAXBException {
-        JAXBContext context = JAXBContext.newInstance(object.getClass());
-        Marshaller marshaller = context.createMarshaller();
-        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        marshaller.marshal(object, baos);
-        return new String(baos.toByteArray());
+    private String convert2XML(Object object) {
+//        JAXBContext context = JAXBContext.newInstance(object.getClass());
+//        Marshaller marshaller = context.createMarshaller();
+//        marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
+//        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+//
+//        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//        marshaller.marshal(object, baos);
+        return new String("no logic");
     }
 
     private boolean handleBefores(RoutingContext routingContext,ClassInfo classInfo, MethodInfo methodInfo){
