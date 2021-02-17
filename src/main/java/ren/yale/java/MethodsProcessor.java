@@ -1,5 +1,6 @@
 package ren.yale.java;
 
+import io.netty.util.internal.StringUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ren.yale.java.annotation.Blocking;
@@ -100,16 +101,13 @@ class MethodsProcessor {
         return null;
     }
     public static ClassInfo  get(List<ClassInfo> classInfos, Class clazz) {
-
-
+        ClassInfo classInfo = new ClassInfo();
         Path path = (Path) clazz.getAnnotation(Path.class);
 
-        if (path==null||path.value()==null){
-            return null;
+        if (path != null && !StringUtil.isNullOrEmpty(path.value())) {
+            classInfo.setClassPath(path.value());
         }
 
-        ClassInfo classInfo = new ClassInfo();
-        classInfo.setClassPath(path.value());
         classInfo.setClazzObj(newClass(clazz));
         classInfo.setClazz(clazz);
 
@@ -173,22 +171,22 @@ class MethodsProcessor {
                 argInfo.setParameter(parameters[i]);
 
                 for (Annotation ant:an) {
-                    if (ant instanceof Context){
+                    if (ant instanceof Context) {
                         argInfo.setContext(true);
-                    }else
-                    if (ant instanceof DefaultValue){
+                    } else if (ant instanceof DefaultValue) {
                         argInfo.setDefaultValue(((DefaultValue) ant).value());
-                    }else if (ant instanceof PathParam){
+                    } else if (ant instanceof PathParam) {
                         argInfo.setPathParam(true);
                         argInfo.setPathParam(((PathParam) ant).value());
-                    }else if (ant instanceof QueryParam){
+                    } else if (ant instanceof QueryParam) {
                         argInfo.setQueryParam(true);
                         argInfo.setQueryParam(((QueryParam) ant).value());
-                    }else if (ant instanceof FormParam){
+                    } else if (ant instanceof FormParam) {
                         argInfo.setFormParam(true);
                         argInfo.setFormParam(((FormParam) ant).value());
+                    } else if (ant instanceof BeanParam) {
+                        argInfo.setBeanParam(true);
                     }
-
                 }
 
                 i++;

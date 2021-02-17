@@ -26,6 +26,7 @@ public class ArgInfo {
     private boolean isFormParam;
     private String formParam;
 
+    private boolean isBeanParam;
 
 
     public Class getClazz() {
@@ -119,4 +120,11 @@ public class ArgInfo {
     }
 
 
+    public boolean isBeanParam() {
+        return isBeanParam;
+    }
+
+    public void setBeanParam(boolean beanParam) {
+        isBeanParam = beanParam;
+    }
 }
