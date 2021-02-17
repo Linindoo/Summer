@@ -70,7 +70,7 @@ public abstract class AbstractSummerContainer {
                 config.put("type", service.type());
                 AsyncService<Object> asyncService = new AsyncService() {
                     @Override
-                    public Promise get() {
+                    public Promise<Object> get() {
                         Promise<Object> promise = Promise.promise();
                         if (!StringUtil.isNullOrEmpty(this.getRegistration()) && serviceReferences.containsKey(this.getRegistration())) {
                             ServiceReference serviceReference = serviceReferences.get(this.getRegistration());

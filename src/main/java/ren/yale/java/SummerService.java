@@ -5,6 +5,7 @@ import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.types.EventBusService;
 import io.vertx.serviceproxy.ProxyHelper;
+import io.vertx.serviceproxy.ServiceBinder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ren.yale.java.method.ClassInfo;
@@ -16,9 +17,11 @@ import ren.yale.java.method.ClassInfo;
  **/
 public class SummerService extends AbstractSummerContainer {
     private final static Logger LOGGER = LogManager.getLogger(SummerService.class.getName());
+    private ServiceBinder serviceBinder;
 
     public SummerService(ServiceDiscovery discovery, Vertx vertx) {
         super(discovery, vertx);
+        this.serviceBinder = new ServiceBinder(vertx);
     }
 
 
@@ -33,7 +36,8 @@ public class SummerService extends AbstractSummerContainer {
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
             }
-            ProxyHelper.registerService(interfaceClass, vertx, classInfo.getClazzObj(), clazz.getSimpleName());
+            this.serviceBinder.setAddress(clazz.getSimpleName())
+                    .register(interfaceClass, classInfo.getClazzObj());
             Record record = EventBusService.createRecord(clazz.getSimpleName(), clazz.getSimpleName(), interfaceClass);
             discovery.publish(record, ar -> {
                 if (ar.succeeded()) {
