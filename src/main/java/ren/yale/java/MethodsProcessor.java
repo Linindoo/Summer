@@ -19,19 +19,20 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Yale
  *
  * create at:  2018-01-31 17:25
  **/
-class MethodsProcessor {
+public class MethodsProcessor {
     private final static Logger LOGGER = LogManager.getLogger(MethodsProcessor.class.getName());
 
     private MethodsProcessor() {
     }
 
-    private static Object newClass(Class clazz){
+    public static Object newClass(Class clazz){
 
         try {
             for (Constructor<?> c : clazz.getDeclaredConstructors()) {
@@ -73,12 +74,16 @@ class MethodsProcessor {
 
     }
 
-    private static Interceptor[] getIntercepter(Class<? extends Interceptor>[] inter){
+    private static Interceptor[] getIntercepter(Class<? extends Interceptor>[] inter, Map<Class<? extends Interceptor>, Interceptor> interceptorMap){
         try {
             Interceptor[] interceptors = new Interceptor[inter.length];
             int i=0;
             for (Class<? extends Interceptor> cls:inter) {
-                Interceptor interceptor= cls.newInstance();
+                Interceptor interceptor = interceptorMap.get(cls);
+                if (interceptor == null) {
+                    interceptor =  cls.getDeclaredConstructor().newInstance();
+                    interceptorMap.put(cls, interceptor);
+                }
                 interceptors[i] = interceptor;
                 i++;
             }
@@ -88,22 +93,21 @@ class MethodsProcessor {
         }
         return null;
     }
-    private static Interceptor[] getBefores(Before before){
-        if (before!=null&&before.value()!=null&&before.value().length>0){
-            return getIntercepter(before.value());
+    private static Interceptor[] getBefores(Before before, Map<Class<? extends Interceptor>, Interceptor> interceptorMap){
+        if (before != null && before.value().length > 0) {
+            return getIntercepter(before.value(), interceptorMap);
         }
         return null;
     }
-    private static Interceptor[] getAfters(After after){
-        if (after!=null&&after.value()!=null&&after.value().length>0){
-            return getIntercepter(after.value());
+    private static Interceptor[] getAfters(After after, Map<Class<? extends Interceptor>, Interceptor> interceptorMap){
+        if (after != null && after.value().length > 0) {
+            return getIntercepter(after.value(), interceptorMap);
         }
         return null;
     }
-    public static ClassInfo  get(List<ClassInfo> classInfos, Class clazz) {
+    public static ClassInfo  get(SummerRouter summerRouter, Class clazz) {
         ClassInfo classInfo = new ClassInfo();
         Path path = (Path) clazz.getAnnotation(Path.class);
-
         if (path != null && !StringUtil.isNullOrEmpty(path.value())) {
             classInfo.setClassPath(path.value());
         }
@@ -112,12 +116,12 @@ class MethodsProcessor {
         classInfo.setClazz(clazz);
 
         Interceptor[] interceptorsClazz =
-                getBefores((Before) clazz.getAnnotation(Before.class));
+                getBefores((Before) clazz.getAnnotation(Before.class), summerRouter.getInterceptorMap());
         if (interceptorsClazz!=null){
             classInfo.setBefores(interceptorsClazz);
         }
         interceptorsClazz =
-                getAfters((After) clazz.getAnnotation(After.class));
+                getAfters((After) clazz.getAnnotation(After.class), summerRouter.getInterceptorMap());
         if (interceptorsClazz!=null){
             classInfo.setAfters(interceptorsClazz);
         }
@@ -130,13 +134,13 @@ class MethodsProcessor {
 
 
             Interceptor[] interceptorsMethod =
-                    getBefores((Before) method.getAnnotation(Before.class));
+                    getBefores(method.getAnnotation(Before.class), summerRouter.getInterceptorMap());
             if (interceptorsMethod!=null){
                 methodInfo.setBefores(interceptorsMethod);
             }
 
             interceptorsMethod =
-                    getAfters((After) method.getAnnotation(After.class));
+                    getAfters(method.getAnnotation(After.class), summerRouter.getInterceptorMap());
             if (interceptorsMethod!=null){
                 methodInfo.setAfters(interceptorsMethod);
             }
@@ -196,8 +200,7 @@ class MethodsProcessor {
             classInfo.addMethodInfo(methodInfo);
 
         }
-        classInfos.add(classInfo);
-
+        summerRouter.classInfos.add(classInfo);
         return classInfo;
     }
     private static boolean isRestClass(Class cls) {

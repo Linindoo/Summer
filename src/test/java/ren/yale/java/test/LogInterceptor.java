@@ -1,5 +1,6 @@
 package ren.yale.java.test;
 
+import io.vertx.core.Promise;
 import io.vertx.ext.web.RoutingContext;
 import ren.yale.java.interceptor.Interceptor;
 
@@ -10,8 +11,10 @@ import ren.yale.java.interceptor.Interceptor;
  **/
 public class LogInterceptor implements Interceptor {
     @Override
-    public boolean handle(RoutingContext routingContext, Object obj) {
+    public Promise handle(RoutingContext routingContext, Object obj) {
         System.out.println(routingContext.request().absoluteURI());
-        return false;
+        Promise<Object> promise = Promise.promise();
+        promise.complete();
+        return promise;
     }
 }

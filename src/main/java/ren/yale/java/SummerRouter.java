@@ -1,9 +1,7 @@
 package ren.yale.java;
 
 import io.netty.util.internal.StringUtil;
-import io.vertx.core.Handler;
-import io.vertx.core.Promise;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -25,9 +23,7 @@ import ren.yale.java.tools.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Yale
@@ -39,11 +35,22 @@ public class SummerRouter extends AbstractSummerContainer{
 
     private Router router;
     private String contextPath = "";
+    protected Map<Class<? extends Interceptor>, Interceptor> interceptorMap;
+
 
     public SummerRouter(Router router, ServiceDiscovery discovery, Vertx vertx) {
         super(discovery, vertx);
         this.router = router;
+        this.interceptorMap = new HashMap<>();
         this.init();
+    }
+
+    public Map<Class<? extends Interceptor>, Interceptor> getInterceptorMap() {
+        return interceptorMap;
+    }
+
+    public void setInterceptorMap(Map<Class<? extends Interceptor>, Interceptor> interceptorMap) {
+        this.interceptorMap = interceptorMap;
     }
 
     public String getContextPath() {
@@ -68,7 +75,7 @@ public class SummerRouter extends AbstractSummerContainer{
         if (isRegister(clazz)){
             return;
         }
-        ClassInfo classInfo = MethodsProcessor.get(classInfos, clazz);
+        ClassInfo classInfo = MethodsProcessor.get(this, clazz);
         try {
             autoWriedBean(classInfo);
         } catch (IllegalAccessException e) {
@@ -254,98 +261,92 @@ public class SummerRouter extends AbstractSummerContainer{
         return new String("no logic");
     }
 
-    private boolean handleBefores(RoutingContext routingContext,ClassInfo classInfo, MethodInfo methodInfo){
+    private Promise<Object> handleBefores(RoutingContext routingContext,ClassInfo classInfo, MethodInfo methodInfo){
         List<Interceptor> beforeList = new ArrayList<>();
-
         if (methodInfo.getBefores()!=null){
             beforeList.addAll(Arrays.asList(methodInfo.getBefores()));
         }
         if (classInfo.getBefores()!=null){
             beforeList.addAll(Arrays.asList(classInfo.getBefores()));
         }
+        Promise<Object> promise = Promise.promise();
+        List<Future> futures = new ArrayList<>();
         for (Interceptor inter:beforeList) {
-            if (inter.handle(routingContext,null)){
-                return true;
-            }
+            futures.add(inter.handle(routingContext, null).future());
         }
-        return false;
+        CompositeFuture.all(futures).onSuccess(x->{
+            promise.complete(x);
+        }).onFailure(e->{
+            promise.fail(e);
+        });
+        return promise;
     }
-    private boolean handleAfters(RoutingContext routingContext,ClassInfo classInfo, MethodInfo methodInfo
-    ,Object obj){
-        List<Interceptor> list = new ArrayList<>();
 
-        if (methodInfo.getAfters()!=null){
+    private Promise<Object> handleAfters(RoutingContext routingContext, ClassInfo classInfo, MethodInfo methodInfo, Object obj) {
+        List<Interceptor> list = new ArrayList<>();
+        if (methodInfo.getAfters() != null) {
             list.addAll(Arrays.asList(methodInfo.getAfters()));
         }
-        if (classInfo.getAfters()!=null){
+        if (classInfo.getAfters() != null) {
             list.addAll(Arrays.asList(classInfo.getAfters()));
         }
-        for (Interceptor inter:list) {
-            if (inter.handle(routingContext,obj)){
-                return true;
-            }
+        List<Future> futures = new ArrayList<>();
+        for (Interceptor inter : list) {
+            futures.add(inter.handle(routingContext, obj).future());
         }
-        return false;
+        Promise<Object> promise = Promise.promise();
+        CompositeFuture.all(futures).onSuccess(x->{
+            promise.complete(obj);
+        }).onFailure(promise::fail);
+        return promise;
     }
-    private void handlers(ClassInfo classInfo, MethodInfo methodInfo,RoutingContext routingContext){
-        if (handleBefores(routingContext,classInfo,methodInfo)){
-            return;
-        }
+    private Promise<Object> handlers(ClassInfo classInfo, MethodInfo methodInfo,RoutingContext routingContext){
+        Promise<Object> promise = Promise.promise();
         Object[] args = getArgs(routingContext, classInfo, methodInfo);
-        routingContext.response().putHeader("Content-Type",methodInfo.getProducesType())
-                .setStatusCode(200);
-
         try {
             Object result = methodInfo.getMethod().invoke(classInfo.getClazzObj(), args);
             if (result != null) {
                 if (!routingContext.response().ended()) {
-
-                    if (handleAfters(routingContext, classInfo, methodInfo, result)) {
-                        return;
-                    }
                     if (!routingContext.response().ended()) {
                         if (result instanceof Promise) {
-                            Promise<Object> promise = (Promise) result;
-                            promise.future().onComplete(x -> {
-                                if (x.succeeded()) {
-                                    Object handlerRet = x.result();
-                                    handlerResponse(methodInfo, routingContext, handlerRet);
-                                } else {
-                                    handlerResponse(methodInfo, routingContext, x.cause().getMessage());
-                                }
-                            });
+                            return (Promise<Object>) result;
                         } else {
-                            handlerResponse(methodInfo, routingContext, result);
+                            promise.complete(result);
                         }
                     }
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.error(e.toString());
-            routingContext.response().setStatusCode(500).putHeader("Content-Type", MediaType.TEXT_PLAIN + ";charset=utf-8")
-                    .end(e.toString());
+            promise.fail(e);
         }
+        return promise;
     }
 
-    private void handlerResponse(MethodInfo methodInfo, RoutingContext routingContext, Object result) {
-        if (result instanceof String) {
-            JsonObject jsonObject = handlerApplicationJson(routingContext);
-            jsonObject.put("msg", result);
-            routingContext.response().putHeader("content-type", "application/json")
-                    .end(jsonObject.toString());
-        } else if (result instanceof JsonObject) {
-            JsonObject jsonObject = handlerApplicationJson(routingContext);
-            jsonObject.put("data", result);
-            routingContext.response().end(jsonObject.toString());
-        } else {
-            if (methodInfo.getProducesType().contains(MediaType.TEXT_XML) ||
-                    methodInfo.getProducesType().contains(MediaType.APPLICATION_XML)) {
-                routingContext.response().end(convert2XML(result));
+    private void handlerResponse(MethodInfo methodInfo, RoutingContext routingContext, Promise<Object> promise) {
+        promise.future().onComplete(x -> {
+            if (x.succeeded()) {
+                Object result = x.result();
+                if (result instanceof String) {
+                    JsonObject jsonObject = handlerApplicationJson(routingContext);
+                    jsonObject.put("msg", result);
+                    routingContext.response().putHeader("content-type", "application/json")
+                            .end(jsonObject.toString());
+                } else if (result instanceof JsonObject) {
+                    JsonObject jsonObject = handlerApplicationJson(routingContext);
+                    jsonObject.put("data", result);
+                    routingContext.response().end(jsonObject.toString());
+                } else {
+                    if (methodInfo.getProducesType().contains(MediaType.TEXT_XML) ||
+                            methodInfo.getProducesType().contains(MediaType.APPLICATION_XML)) {
+                        routingContext.response().end(convert2XML(result));
+                    } else {
+                        routingContext.response().putHeader("Content-Type", MediaType.APPLICATION_JSON + ";charset=utf-8").end(JsonObject.mapFrom(result).encodePrettily());
+                    }
+                }
             } else {
-                routingContext.response().putHeader("Content-Type", MediaType.APPLICATION_JSON + ";charset=utf-8").end(JsonObject.mapFrom(result).encodePrettily());
+                routingContext.fail(x.cause());
             }
-        }
+        });
     }
 
     private JsonObject handlerApplicationJson(RoutingContext routingContext) {
@@ -370,15 +371,17 @@ public class SummerRouter extends AbstractSummerContainer{
     }
 
     private Handler<RoutingContext> getHandler(ClassInfo classInfo, MethodInfo methodInfo){
-
         return (routingContext -> {
-            try {
-                handlers(classInfo,methodInfo,routingContext);
-            } catch (Exception e) {
-                LOGGER.error(e.getMessage());
-                routingContext.response().setStatusCode(500).putHeader("Content-Type", MediaType.TEXT_PLAIN+";charset=utf-8")
-                        .end(e.toString());
-            }
+            routingContext.response().putHeader("content-type", methodInfo.getProducesType());
+            handleBefores(routingContext, classInfo, methodInfo).future().onSuccess(x -> {
+                Promise<Object> routerHandler = handlers(classInfo, methodInfo, routingContext);
+                routerHandler.future().onComplete(r -> {
+                    Promise<Object> handleAfters = handleAfters(routingContext, classInfo, methodInfo, r.result());
+                    handlerResponse(methodInfo, routingContext, handleAfters);
+                });
+            }).onFailure(e -> {
+                routingContext.fail(e);
+            });
         });
     }
 }

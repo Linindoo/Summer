@@ -1,11 +1,10 @@
 package ren.yale.java.test;
 
+import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 import ren.yale.java.bean.User;
 import ren.yale.java.interceptor.Interceptor;
-
-import javax.ws.rs.core.MediaType;
 
 /**
  * Yale
@@ -14,11 +13,13 @@ import javax.ws.rs.core.MediaType;
  **/
 public class ChangeUserInterceptor implements Interceptor {
     @Override
-    public boolean handle(RoutingContext routingContext,Object obj) {
+    public Promise handle(RoutingContext routingContext, Object obj) {
+        Promise<Object> promise = Promise.promise();
         User user = (User) obj;
         user.setName("Alice");
         routingContext.response()
                 .end(JsonObject.mapFrom(user).encodePrettily());
-        return true;
+        promise.complete(user);
+        return promise;
     }
 }
