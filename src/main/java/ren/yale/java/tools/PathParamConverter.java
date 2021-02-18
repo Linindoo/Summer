@@ -19,10 +19,9 @@ public class PathParamConverter {
 
             String p = matcher.group(0);
             if (p.length()>0){
-                p = p.replace("{","").replace("}","");
-                path=path.replace(matcher.group(0),":"+p);
+                p = p.replace("{", "").replace("}", "");
+                path = path.replace(matcher.group(0), ":" + p);
             }
-
         }
         return path;
 
