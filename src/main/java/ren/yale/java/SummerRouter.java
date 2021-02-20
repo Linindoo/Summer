@@ -290,14 +290,20 @@ public class SummerRouter extends AbstractSummerContainer{
         if (classInfo.getAfters() != null) {
             list.addAll(Arrays.asList(classInfo.getAfters()));
         }
-        List<Future> futures = new ArrayList<>();
-        for (Interceptor inter : list) {
-            futures.add(inter.handle(routingContext, obj).future());
-        }
         Promise<Object> promise = Promise.promise();
-        CompositeFuture.all(futures).onSuccess(x->{
-            promise.complete(obj);
-        }).onFailure(promise::fail);
+        Future<Object> future = null;
+        for (Interceptor inter : list) {
+            if (future == null) {
+                future = inter.handle(routingContext, obj).future();
+            } else {
+                future = future.compose(x -> inter.handle(routingContext, obj).future(), Future::failedFuture);
+            }
+        }
+        if (future == null) {
+            promise.complete();
+        } else {
+            future.onSuccess(promise::complete).onFailure(promise::fail);
+        }
         return promise;
     }
     private Promise<Object> handlers(ClassInfo classInfo, MethodInfo methodInfo,RoutingContext routingContext){
