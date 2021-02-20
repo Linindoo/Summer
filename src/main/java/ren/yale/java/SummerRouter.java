@@ -1,7 +1,10 @@
 package ren.yale.java;
 
 import io.netty.util.internal.StringUtil;
-import io.vertx.core.*;
+import io.vertx.core.Future;
+import io.vertx.core.Handler;
+import io.vertx.core.Promise;
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
@@ -19,7 +22,8 @@ import ren.yale.java.interceptor.Interceptor;
 import ren.yale.java.method.ArgInfo;
 import ren.yale.java.method.ClassInfo;
 import ren.yale.java.method.MethodInfo;
-import ren.yale.java.tools.*;
+import ren.yale.java.tools.PathParamConverter;
+import ren.yale.java.tools.StringUtils;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -270,15 +274,19 @@ public class SummerRouter extends AbstractSummerContainer{
             beforeList.addAll(Arrays.asList(classInfo.getBefores()));
         }
         Promise<Object> promise = Promise.promise();
-        List<Future> futures = new ArrayList<>();
-        for (Interceptor inter:beforeList) {
-            futures.add(inter.handle(routingContext, null).future());
+        Future<Object> future = null;
+        for (Interceptor inter : beforeList) {
+            if (future == null) {
+                future = inter.handle(routingContext, null).future();
+            } else {
+                future = future.compose(x -> inter.handle(routingContext, null).future(), Future::failedFuture);
+            }
         }
-        CompositeFuture.all(futures).onSuccess(x->{
-            promise.complete(x);
-        }).onFailure(e->{
-            promise.fail(e);
-        });
+        if (future == null) {
+            promise.complete();
+        } else {
+            future.onSuccess(promise::complete).onFailure(promise::fail);
+        }
         return promise;
     }
 
@@ -300,7 +308,7 @@ public class SummerRouter extends AbstractSummerContainer{
             }
         }
         if (future == null) {
-            promise.complete();
+            promise.complete(obj);
         } else {
             future.onSuccess(promise::complete).onFailure(promise::fail);
         }
@@ -385,9 +393,7 @@ public class SummerRouter extends AbstractSummerContainer{
                     Promise<Object> handleAfters = handleAfters(routingContext, classInfo, methodInfo, r.result());
                     handlerResponse(methodInfo, routingContext, handleAfters);
                 });
-            }).onFailure(e -> {
-                routingContext.fail(e);
-            });
+            }).onFailure(routingContext::fail);
         });
     }
 }
