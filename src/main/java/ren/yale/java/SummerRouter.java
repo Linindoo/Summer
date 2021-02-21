@@ -267,12 +267,13 @@ public class SummerRouter extends AbstractSummerContainer{
 
     private Promise<Object> handleBefores(RoutingContext routingContext,ClassInfo classInfo, MethodInfo methodInfo){
         List<Interceptor> beforeList = new ArrayList<>();
-        if (methodInfo.getBefores()!=null){
-            beforeList.addAll(Arrays.asList(methodInfo.getBefores()));
-        }
         if (classInfo.getBefores()!=null){
             beforeList.addAll(Arrays.asList(classInfo.getBefores()));
         }
+        if (methodInfo.getBefores()!=null){
+            beforeList.addAll(Arrays.asList(methodInfo.getBefores()));
+        }
+
         Promise<Object> promise = Promise.promise();
         Future<Object> future = null;
         for (Interceptor inter : beforeList) {
@@ -331,6 +332,7 @@ public class SummerRouter extends AbstractSummerContainer{
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
             promise.fail(e);
         }
         return promise;
@@ -340,12 +342,7 @@ public class SummerRouter extends AbstractSummerContainer{
         promise.future().onComplete(x -> {
             if (x.succeeded()) {
                 Object result = x.result();
-                if (result instanceof String) {
-                    JsonObject jsonObject = handlerApplicationJson(routingContext);
-                    jsonObject.put("msg", result);
-                    routingContext.response().putHeader("content-type", "application/json")
-                            .end(jsonObject.toString());
-                } else if (result instanceof JsonObject) {
+                if (methodInfo.getProducesType().contains("application/json")) {
                     JsonObject jsonObject = handlerApplicationJson(routingContext);
                     jsonObject.put("data", result);
                     routingContext.response().end(jsonObject.toString());
@@ -393,7 +390,13 @@ public class SummerRouter extends AbstractSummerContainer{
                     Promise<Object> handleAfters = handleAfters(routingContext, classInfo, methodInfo, r.result());
                     handlerResponse(methodInfo, routingContext, handleAfters);
                 });
-            }).onFailure(routingContext::fail);
+            }).onFailure(e -> {
+                JsonObject jsonObject = handlerApplicationJson(routingContext);
+                jsonObject.put("msg", e.getMessage());
+                jsonObject.put("code", 1);
+                routingContext.response().putHeader("content-type", "application/json")
+                        .end(jsonObject.toString());
+            });
         });
     }
 }
