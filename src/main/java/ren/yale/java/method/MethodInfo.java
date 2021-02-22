@@ -1,5 +1,6 @@
 package ren.yale.java.method;
 
+import ren.yale.java.ResponseHandler;
 import ren.yale.java.interceptor.Interceptor;
 
 import javax.ws.rs.core.MediaType;
@@ -26,6 +27,8 @@ public class MethodInfo {
     private Interceptor[] befores;
 
     private Interceptor[] afters;
+
+    private ResponseHandler responseHandler;
 
     public Interceptor[] getAfters() {
         return afters;
@@ -89,5 +92,13 @@ public class MethodInfo {
 
     public void addArgInfo(ArgInfo argInfo) {
        argInfoList.add(argInfo);
+    }
+
+    public ResponseHandler getResponseHandler() {
+        return responseHandler;
+    }
+
+    public void setResponseHandler(ResponseHandler responseHandler) {
+        this.responseHandler = responseHandler;
     }
 }

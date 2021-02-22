@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Logger;
 import ren.yale.java.annotation.Blocking;
 import ren.yale.java.aop.After;
 import ren.yale.java.aop.Before;
+import ren.yale.java.aop.Response;
 import ren.yale.java.interceptor.Interceptor;
 import ren.yale.java.method.ArgInfo;
 import ren.yale.java.method.ClassInfo;
@@ -15,6 +16,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Arrays;
@@ -125,6 +127,10 @@ public class MethodsProcessor {
         if (interceptorsClazz!=null){
             classInfo.setAfters(interceptorsClazz);
         }
+        ResponseHandler responseHandler = getReponseHandler((Response) clazz.getAnnotation(Response.class), summerRouter.getResponseHandlerMap());
+        if (responseHandler != null) {
+            classInfo.setResponseHandler(responseHandler);
+        }
         for (Method method : clazz.getMethods()) {
             Class mt = method.getDeclaringClass();
             if ( mt ==  Object.class){
@@ -145,6 +151,10 @@ public class MethodsProcessor {
                 methodInfo.setAfters(interceptorsMethod);
             }
 
+            ResponseHandler reponseHandler = getReponseHandler(method.getAnnotation(Response.class), summerRouter.getResponseHandlerMap());
+            if (reponseHandler != null) {
+                methodInfo.setResponseHandler(reponseHandler);
+            }
             Blocking blocking = method.getAnnotation(Blocking.class);
             if (blocking!=null){
                 methodInfo.setBlocking(true);
@@ -203,6 +213,25 @@ public class MethodsProcessor {
         summerRouter.classInfos.add(classInfo);
         return classInfo;
     }
+
+    private static ResponseHandler getReponseHandler(Response response, Map<Class<? extends ResponseHandler>, ResponseHandler> responseHandlerMap) {
+        if (response == null) {
+            return null;
+        }
+        ResponseHandler responseHandler = responseHandlerMap.get(response.value());
+        if (responseHandler != null) {
+            return responseHandler;
+        }
+        try {
+            responseHandler = response.value().getDeclaredConstructor().newInstance();
+            responseHandlerMap.put(response.value(), responseHandler);
+            return responseHandler;
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     private static boolean isRestClass(Class cls) {
 
         List<Class<Path>> search = Arrays.asList(Path.class);

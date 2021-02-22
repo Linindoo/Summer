@@ -1,5 +1,6 @@
 package ren.yale.java.method;
 
+import ren.yale.java.ResponseHandler;
 import ren.yale.java.interceptor.Interceptor;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ public class ClassInfo {
     private Class clazz;
     private Interceptor[] befores;
     private Interceptor[] afters;
+    private ResponseHandler responseHandler;
 
     public Interceptor[] getAfters() {
         return afters;
@@ -67,5 +69,13 @@ public class ClassInfo {
 
     public void addMethodInfo(MethodInfo methodInfo) {
         methodInfoList.add(methodInfo);
+    }
+
+    public ResponseHandler getResponseHandler() {
+        return responseHandler;
+    }
+
+    public void setResponseHandler(ResponseHandler responseHandler) {
+        this.responseHandler = responseHandler;
     }
 }

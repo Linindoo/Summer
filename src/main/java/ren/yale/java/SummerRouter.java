@@ -18,10 +18,12 @@ import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import ren.yale.java.aop.Response;
 import ren.yale.java.interceptor.Interceptor;
 import ren.yale.java.method.ArgInfo;
 import ren.yale.java.method.ClassInfo;
 import ren.yale.java.method.MethodInfo;
+import ren.yale.java.response.BaseResponse;
 import ren.yale.java.tools.PathParamConverter;
 import ren.yale.java.tools.StringUtils;
 
@@ -40,12 +42,14 @@ public class SummerRouter extends AbstractSummerContainer{
     private Router router;
     private String contextPath = "";
     protected Map<Class<? extends Interceptor>, Interceptor> interceptorMap;
+    protected Map<Class<? extends ResponseHandler>, ResponseHandler> responseHandlerMap;
 
 
     public SummerRouter(Router router, ServiceDiscovery discovery, Vertx vertx) {
         super(discovery, vertx);
         this.router = router;
         this.interceptorMap = new HashMap<>();
+        this.responseHandlerMap = new HashMap<>();
         this.init();
     }
 
@@ -55,6 +59,14 @@ public class SummerRouter extends AbstractSummerContainer{
 
     public void setInterceptorMap(Map<Class<? extends Interceptor>, Interceptor> interceptorMap) {
         this.interceptorMap = interceptorMap;
+    }
+
+    public Map<Class<? extends ResponseHandler>, ResponseHandler> getResponseHandlerMap() {
+        return responseHandlerMap;
+    }
+
+    public void setResponseHandlerMap(Map<Class<? extends ResponseHandler>, ResponseHandler> responseHandlerMap) {
+        this.responseHandlerMap = responseHandlerMap;
     }
 
     public String getContextPath() {
@@ -383,21 +395,34 @@ public class SummerRouter extends AbstractSummerContainer{
 
     private Handler<RoutingContext> getHandler(ClassInfo classInfo, MethodInfo methodInfo){
         return (routingContext -> {
+            ResponseHandler responseHandler = getResponseHandler(classInfo, methodInfo);
             routingContext.response().putHeader("content-type", methodInfo.getProducesType());
             handleBefores(routingContext, classInfo, methodInfo).future().onSuccess(x -> {
                 Promise<Object> routerHandler = handlers(classInfo, methodInfo, routingContext);
-                routerHandler.future().onComplete(r -> {
-                    Promise<Object> handleAfters = handleAfters(routingContext, classInfo, methodInfo, r.result());
-                    handlerResponse(methodInfo, routingContext, handleAfters);
+                routerHandler.future().onSuccess(v->{
+                    handleAfters(routingContext, classInfo, methodInfo, v).future().onSuccess(y -> {
+                        responseHandler.successHandler(routingContext, y);
+                    }).onFailure(e -> {
+                        responseHandler.errorHandler(routingContext, e);
+                    });
+
+                }).onFailure(e->{
+                    responseHandler.errorHandler(routingContext, e);
                 });
             }).onFailure(e -> {
-                JsonObject jsonObject = handlerApplicationJson(routingContext);
-                jsonObject.put("msg", e.getMessage());
-                jsonObject.put("code", 1);
-                routingContext.response().putHeader("content-type", "application/json")
-                        .end(jsonObject.toString());
+                responseHandler.errorHandler(routingContext, e);
+//                JsonObject jsonObject = handlerApplicationJson(routingContext);
+//                jsonObject.put("msg", e.getMessage());
+//                jsonObject.put("code", 1);
+//                routingContext.response().putHeader("content-type", "application/json")
+//                        .end(jsonObject.toString());
             });
         });
+    }
+
+    private ResponseHandler getResponseHandler(ClassInfo classInfo, MethodInfo methodInfo) {
+        ResponseHandler responseHandler = Optional.ofNullable(methodInfo.getResponseHandler()).orElse(classInfo.getResponseHandler());
+        return responseHandler == null ? new BaseResponse() : responseHandler;
     }
 }
 
