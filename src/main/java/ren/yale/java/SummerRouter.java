@@ -350,49 +350,6 @@ public class SummerRouter extends AbstractSummerContainer{
         return promise;
     }
 
-    private void handlerResponse(MethodInfo methodInfo, RoutingContext routingContext, Promise<Object> promise) {
-        promise.future().onComplete(x -> {
-            if (x.succeeded()) {
-                Object result = x.result();
-                if (methodInfo.getProducesType().contains("application/json")) {
-                    JsonObject jsonObject = handlerApplicationJson(routingContext);
-                    jsonObject.put("data", result);
-                    routingContext.response().end(jsonObject.toString());
-                } else {
-                    if (methodInfo.getProducesType().contains(MediaType.TEXT_XML) ||
-                            methodInfo.getProducesType().contains(MediaType.APPLICATION_XML)) {
-                        routingContext.response().end(convert2XML(result));
-                    } else {
-                        routingContext.response().putHeader("Content-Type", MediaType.APPLICATION_JSON + ";charset=utf-8").end(JsonObject.mapFrom(result).encodePrettily());
-                    }
-                }
-            } else {
-                routingContext.fail(x.cause());
-            }
-        });
-    }
-
-    private JsonObject handlerApplicationJson(RoutingContext routingContext) {
-        JsonObject responseData = new JsonObject().put("code", 0);
-        Object total = routingContext.get("total");
-        if (total != null) {
-            responseData.put("total", total);
-        }
-        Object cursor = routingContext.get("cursor");
-        if (cursor != null) {
-            responseData.put("cursor", cursor);
-        } else {
-            responseData.put("cursor", 0);
-        }
-        Object hasNext = routingContext.get("hasNext");
-        if (hasNext != null) {
-            responseData.put("hasNext", hasNext);
-        } else {
-            responseData.put("hasNext", false);
-        }
-        return responseData;
-    }
-
     private Handler<RoutingContext> getHandler(ClassInfo classInfo, MethodInfo methodInfo){
         return (routingContext -> {
             ResponseHandler responseHandler = getResponseHandler(classInfo, methodInfo);
@@ -411,11 +368,6 @@ public class SummerRouter extends AbstractSummerContainer{
                 });
             }).onFailure(e -> {
                 responseHandler.errorHandler(routingContext, e);
-//                JsonObject jsonObject = handlerApplicationJson(routingContext);
-//                jsonObject.put("msg", e.getMessage());
-//                jsonObject.put("code", 1);
-//                routingContext.response().putHeader("content-type", "application/json")
-//                        .end(jsonObject.toString());
             });
         });
     }

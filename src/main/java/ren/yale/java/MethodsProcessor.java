@@ -58,7 +58,7 @@ public class MethodsProcessor {
 
     }
     private static String getProducesValue(Produces produces){
-        if (produces==null||produces.value()==null||produces.value().length ==0){
+        if (produces == null || produces.value().length == 0){
             return MethodInfo.PRODUCES_TYPE_ALL;
         }
 
@@ -161,8 +161,8 @@ public class MethodsProcessor {
             }
 
 
-            Path pathMthod = (Path) method.getAnnotation(Path.class);
-            Produces produces = (Produces) method.getAnnotation(Produces.class);
+            Path pathMthod = method.getAnnotation(Path.class);
+            Produces produces = method.getAnnotation(Produces.class);
 
             methodInfo.setMethodPath(getPathValue(pathMthod));
             methodInfo.setProducesType(getProducesValue(produces));
