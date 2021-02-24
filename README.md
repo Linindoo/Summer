@@ -283,6 +283,70 @@ public String selectPersonLike(final String id, final String firstName, final St
 
 ```
 
+## Use SummerService:
+
+```java
+
+  public class UserAPIService extends AbstractVerticle {
+
+      @Override
+      public void start() throws Exception {
+          SummerServer summerServer = SummerServer.create(vertx);
+          summerServer.getSummerService().registService(UserServiceImpl.class, UserService.class);
+          summerServer.getSummerRouter().registerResource(UserController.class);
+          summerServer.start().future().onComplete(x -> {
+              if (x.succeeded()) {
+                  System.out.println("port:" + summerServer.getPort());
+                  publishHttpEndpoint(config().getString("api.name", "user"), summerServer.getHost(), summerServer.getPort());
+                  future.complete();
+              } else {
+                  future.fail(x.cause());
+              }
+          });
+      }
+  }
+```
+
+## inject async Service:
+
+```java
+
+@Before(AuthInterceptor.class)
+@Response(JsonResponseBody.class)
+public class UserController {
+
+    @Service(type = EventBusService.TYPE)
+    private AsyncService<UserService> userServicePromise;
+
+    @GET
+    @Path("/info")
+    @Before(LoginInterceptor.class)
+    public Promise<Object> userInfo(@Context RoutingContext context) {
+        JsonObject userInfo = context.get("userInfo");
+        Promise<Object> promise = Promise.promise();
+        userServicePromise.get().future().onSuccess(userService -> {
+            userService.getUserByID(userInfo.getString("userID"), res -> {
+                if (res.succeeded()) {
+                    JsonObject result = res.result();
+                    if (result == null) {
+                        result = new JsonObject();
+                        result.put("nickname", "游客");
+                        result.put("username", "游客");
+                    } else {
+                        result.remove("_id");
+                        result.remove("password");
+                    }
+                    promise.complete(result);
+                } else {
+                    promise.fail("获取失败");
+                }
+            });
+        }).onFailure(promise::fail);
+        return promise;
+    }
+  }
+```
+
 
 ## License
 
