@@ -83,7 +83,7 @@ public class SummerRouter extends AbstractSummerContainer{
     }
     private void init(){
         router.route().handler(BodyHandler.create());
-        SessionHandler handler = SessionHandler.create(LocalSessionStore.create(vertx)).setCookieless(true);
+        SessionHandler handler = SessionHandler.create(LocalSessionStore.create(vertx));
         handler.setNagHttps(true);
         router.route().handler(handler).failureHandler(x -> {
             x.end("error");
