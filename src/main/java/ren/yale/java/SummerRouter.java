@@ -330,8 +330,8 @@ public class SummerRouter extends AbstractSummerContainer{
     }
     private Promise<Object> handlers(ClassInfo classInfo, MethodInfo methodInfo,RoutingContext routingContext){
         Promise<Object> promise = Promise.promise();
-        Object[] args = getArgs(routingContext, classInfo, methodInfo);
         try {
+            Object[] args = getArgs(routingContext, classInfo, methodInfo);
             Object result = methodInfo.getMethod().invoke(classInfo.getClazzObj(), args);
             if (result != null) {
                 if (!routingContext.response().ended()) {
