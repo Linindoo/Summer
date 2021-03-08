@@ -9,6 +9,7 @@
   <parent>
     <artifactId>vert</artifactId>
     <groupId>cn.vert.main</groupId>
+    <relativePath>../app-server/pom.xml</relativePath>
     <version>1.0-SNAPSHOT</version>
   </parent>
 
