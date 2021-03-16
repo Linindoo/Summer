@@ -6,6 +6,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
+import io.vertx.servicediscovery.Status;
 import ren.yale.java.annotation.AsyncService;
 import ren.yale.java.annotation.Service;
 import ren.yale.java.method.ClassInfo;
@@ -74,8 +75,10 @@ public abstract class AbstractSummerContainer {
                         Promise<Object> promise = Promise.promise();
                         if (!StringUtil.isNullOrEmpty(this.getRegistration()) && serviceReferences.containsKey(this.getRegistration())) {
                             ServiceReference serviceReference = serviceReferences.get(this.getRegistration());
-                            promise.complete(serviceReference.get());
-                            return promise;
+                            if (Status.UP == serviceReference.record().getStatus()) {
+                                promise.complete(serviceReference.get());
+                                return promise;
+                            }
                         }
                         discovery.getRecord(config).onSuccess(record -> {
                             this.setRegistration(record.getRegistration());
