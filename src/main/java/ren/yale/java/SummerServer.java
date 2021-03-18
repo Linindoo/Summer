@@ -5,19 +5,12 @@ import io.vertx.core.http.HttpServer;
 import io.vertx.ext.web.Router;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceDiscoveryOptions;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 /**
  * Yale
  *
  * create at:  2018-02-01 16:40
  **/
 public class SummerServer  {
-
-
-    private final static Logger LOGGER = LogManager.getLogger(SummerServer.class.getName());
-
     private Vertx vertx;
     private Router router;
     private SummerRouter summerRouter;

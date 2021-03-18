@@ -1,28 +1,13 @@
 package ren.yale.java;
 
-import io.netty.util.internal.StringUtil;
 import io.vertx.core.Vertx;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.servicediscovery.Record;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.types.EventBusService;
-import io.vertx.serviceproxy.ProxyHelper;
 import io.vertx.serviceproxy.ServiceBinder;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import ren.yale.java.annotation.Blocking;
-import ren.yale.java.aop.After;
-import ren.yale.java.aop.Before;
-import ren.yale.java.interceptor.Interceptor;
-import ren.yale.java.method.ArgInfo;
 import ren.yale.java.method.ClassInfo;
-import ren.yale.java.method.MethodInfo;
-
-import javax.ws.rs.*;
-import javax.ws.rs.core.Context;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
-import java.util.List;
 
 /**
  * Yale
@@ -30,7 +15,8 @@ import java.util.List;
  * create at:  2018-02-01 14:08
  **/
 public class SummerService extends AbstractSummerContainer {
-    private final static Logger LOGGER = LogManager.getLogger(SummerService.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(SummerRouter.class);
+
     private ServiceBinder serviceBinder;
 
     public SummerService(ServiceDiscovery discovery, Vertx vertx) {

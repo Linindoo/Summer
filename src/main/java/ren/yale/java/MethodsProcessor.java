@@ -1,8 +1,8 @@
 package ren.yale.java;
 
 import io.netty.util.internal.StringUtil;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import ren.yale.java.annotation.Blocking;
 import ren.yale.java.aop.After;
 import ren.yale.java.aop.Before;
@@ -29,7 +29,8 @@ import java.util.Map;
  * create at:  2018-01-31 17:25
  **/
 public class MethodsProcessor {
-    private final static Logger LOGGER = LogManager.getLogger(MethodsProcessor.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(SummerRouter.class);
+
 
     private MethodsProcessor() {
     }

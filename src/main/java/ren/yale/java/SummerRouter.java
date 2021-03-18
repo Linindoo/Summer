@@ -7,6 +7,8 @@ import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.impl.logging.Logger;
+import io.vertx.core.impl.logging.LoggerFactory;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
@@ -16,9 +18,6 @@ import io.vertx.ext.web.handler.BodyHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.servicediscovery.ServiceDiscovery;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import ren.yale.java.aop.Response;
 import ren.yale.java.interceptor.Interceptor;
 import ren.yale.java.method.ArgInfo;
 import ren.yale.java.method.ClassInfo;
@@ -28,7 +27,6 @@ import ren.yale.java.tools.PathParamConverter;
 import ren.yale.java.tools.StringUtils;
 
 import javax.ws.rs.*;
-import javax.ws.rs.core.MediaType;
 import java.util.*;
 
 /**
@@ -37,7 +35,8 @@ import java.util.*;
  * create at:  2018-02-01 14:08
  **/
 public class SummerRouter extends AbstractSummerContainer{
-    private final static Logger LOGGER = LogManager.getLogger(SummerRouter.class.getName());
+
+    private static final Logger logger = LoggerFactory.getLogger(SummerRouter.class);
 
     private Router router;
     private String contextPath = "";
@@ -176,7 +175,7 @@ public class SummerRouter extends AbstractSummerContainer{
             }
 
         }catch (Exception e){
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
         }
 
         return null;
@@ -190,7 +189,7 @@ public class SummerRouter extends AbstractSummerContainer{
                 return covertType(argInfo.getClazz(),q);
             }
         }catch (Exception e){
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -207,7 +206,7 @@ public class SummerRouter extends AbstractSummerContainer{
             }
 
         }catch (Exception e){
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
         }
         return null;
     }
@@ -223,7 +222,7 @@ public class SummerRouter extends AbstractSummerContainer{
             }
 
         }catch (Exception e){
-            LOGGER.error(e.getMessage());
+            logger.error(e.getMessage());
         }
 
         return null;
