@@ -8,7 +8,7 @@ import ren.yale.java.annotation.AsyncService;
 
 public final class AsyncServiceImpl<T> extends AsyncService<T> {
     protected ServiceDiscovery discovery;
-    private JsonObject config;
+    private final JsonObject config;
 
     public AsyncServiceImpl(ServiceDiscovery discovery, JsonObject config) {
         this.discovery = discovery;
@@ -18,7 +18,7 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
     @Override
     public Promise<T> get() {
         Promise<T> promise = Promise.promise();
-        discovery.getRecord(config).onSuccess(record -> {
+        discovery.getRecord(this.config).onSuccess(record -> {
             this.setRegistration(record.getRegistration());
             ServiceReference reference = discovery.getReference(record);
             promise.complete(reference.get());

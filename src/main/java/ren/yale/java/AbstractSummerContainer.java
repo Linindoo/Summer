@@ -73,17 +73,17 @@ public abstract class AbstractSummerContainer {
                     @Override
                     public Promise<Object> get() {
                         Promise<Object> promise = Promise.promise();
-                        if (!StringUtil.isNullOrEmpty(this.getRegistration()) && serviceReferences.containsKey(this.getRegistration())) {
-                            ServiceReference serviceReference = serviceReferences.get(this.getRegistration());
-                            if (Status.UP == serviceReference.record().getStatus()) {
-                                promise.complete(serviceReference.get());
-                                return promise;
-                            }
-                        }
+//                        if (!StringUtil.isNullOrEmpty(this.getRegistration()) && serviceReferences.containsKey(this.getRegistration())) {
+//                            ServiceReference serviceReference = serviceReferences.get(this.getRegistration());
+//                            if (Status.UP == serviceReference.record().getStatus()) {
+//                                promise.complete(serviceReference.get());
+//                                return promise;
+//                            }
+//                        }
                         discovery.getRecord(config).onSuccess(record -> {
                             this.setRegistration(record.getRegistration());
                             ServiceReference reference = discovery.getReference(record);
-                            serviceReferences.put(record.getRegistration(), reference);
+//                            serviceReferences.put(record.getRegistration(), reference);
                             promise.complete(reference.get());
                         }).onFailure(promise::fail);
                         return promise;
