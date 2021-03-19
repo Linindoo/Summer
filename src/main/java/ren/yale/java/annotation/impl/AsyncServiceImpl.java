@@ -4,6 +4,7 @@ import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
+import io.vertx.servicediscovery.types.EventBusService;
 import ren.yale.java.annotation.AsyncService;
 
 public final class AsyncServiceImpl<T> extends AsyncService<T> {
@@ -19,9 +20,11 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
     public Promise<T> get() {
         Promise<T> promise = Promise.promise();
         discovery.getRecord(this.config).onSuccess(record -> {
-            this.setRegistration(record.getRegistration());
-            ServiceReference reference = discovery.getReference(record);
-            promise.complete(reference.get());
+            if (record == null) {
+                promise.fail("");
+            } else {
+                promise.complete(discovery.getReference(record).get());
+            }
         }).onFailure(promise::fail);
         return promise;
     }
