@@ -1,12 +1,10 @@
 package ren.yale.java;
 
 import io.netty.util.internal.StringUtil;
-import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
-import io.vertx.servicediscovery.Status;
 import ren.yale.java.annotation.AsyncService;
 import ren.yale.java.annotation.Service;
 import ren.yale.java.method.ClassInfo;
@@ -69,28 +67,8 @@ public abstract class AbstractSummerContainer {
                     config.put("name", service.value());
                 }
                 config.put("type", service.type());
-                AsyncService<Object> asyncService = new AsyncService() {
-                    @Override
-                    public Promise<Object> get() {
-                        Promise<Object> promise = Promise.promise();
-//                        if (!StringUtil.isNullOrEmpty(this.getRegistration()) && serviceReferences.containsKey(this.getRegistration())) {
-//                            ServiceReference serviceReference = serviceReferences.get(this.getRegistration());
-//                            if (Status.UP == serviceReference.record().getStatus()) {
-//                                promise.complete(serviceReference.get());
-//                                return promise;
-//                            }
-//                        }
-                        discovery.getRecord(config).onSuccess(record -> {
-                            this.setRegistration(record.getRegistration());
-                            ServiceReference reference = discovery.getReference(record);
-//                            serviceReferences.put(record.getRegistration(), reference);
-                            promise.complete(reference.get());
-                        }).onFailure(promise::fail);
-                        return promise;
-                    }
-                };
                 declaredField.setAccessible(true);
-                declaredField.set(classInfo.getClazzObj(), asyncService);
+                declaredField.set(classInfo.getClazzObj(), AsyncService.create(discovery, config));
             }
         }
     }
