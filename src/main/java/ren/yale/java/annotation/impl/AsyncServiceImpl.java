@@ -1,5 +1,6 @@
 package ren.yale.java.annotation.impl;
 
+import com.mongodb.lang.NonNull;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
 import io.vertx.core.impl.logging.Logger;
@@ -20,7 +21,7 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
     }
 
     @Override
-    public Promise<T> get(Promise<? extends Object> end) {
+    public Promise<T> get(@NonNull Promise<?> end) {
         Promise<T> promise = Promise.promise();
         logger.info("获取服务:" + this.config.toString());
         discovery.getRecord(this.config).onSuccess(record -> {
@@ -42,6 +43,8 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
                         reference.release();
                         return Future.failedFuture(e);
                     });
+                } else {
+                    logger.warn("当前回调promise为空");
                 }
                 promise.complete(reference.get());
             }

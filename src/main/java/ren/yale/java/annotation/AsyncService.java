@@ -10,7 +10,7 @@ import ren.yale.java.annotation.impl.AsyncServiceImpl;
 public abstract class AsyncService<T> {
     private String registration;
 
-    public abstract Promise<T> get(@NonNull Promise<? extends Object> end);
+    public abstract Promise<T> get(@NonNull Promise<?> end);
 
 
     public String getRegistration() {
