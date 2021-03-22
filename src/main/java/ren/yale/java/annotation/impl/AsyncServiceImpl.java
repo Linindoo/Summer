@@ -28,6 +28,10 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
                 promise.fail("未匹配到合适的服务");
             } else {
                 ServiceReference reference = discovery.getReference(record);
+                if (!record.getRegistration().equalsIgnoreCase(this.getRegistration())) {
+                    logger.info("服务ID改变了");
+                    this.setRegistration(record.getRegistration());
+                }
                 if (end != null) {
                     end.future().compose(x -> {
                         logger.info("服务释放:" + this.config.toString());
