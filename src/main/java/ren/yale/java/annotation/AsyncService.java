@@ -1,5 +1,6 @@
 package ren.yale.java.annotation;
 
+import com.mongodb.lang.NonNull;
 import io.vertx.core.Promise;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
@@ -9,7 +10,8 @@ import ren.yale.java.annotation.impl.AsyncServiceImpl;
 public abstract class AsyncService<T> {
     private String registration;
 
-    public abstract Promise<T> get(Promise<? extends Object> end);
+    public abstract Promise<T> get(@NonNull Promise<? extends Object> end);
+
 
     public String getRegistration() {
         return registration;

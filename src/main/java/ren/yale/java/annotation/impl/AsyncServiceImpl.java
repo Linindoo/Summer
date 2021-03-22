@@ -29,7 +29,7 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
             } else {
                 ServiceReference reference = discovery.getReference(record);
                 if (!record.getRegistration().equalsIgnoreCase(this.getRegistration())) {
-                    logger.info("服务ID改变了");
+                    logger.info(this.config.toString() + ":服务ID改变了:" + getRegistration() + ">" + record.getRegistration());
                     this.setRegistration(record.getRegistration());
                 }
                 if (end != null) {
@@ -48,5 +48,4 @@ public final class AsyncServiceImpl<T> extends AsyncService<T> {
         }).onFailure(promise::fail);
         return promise;
     }
-
 }
