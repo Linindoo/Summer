@@ -5,6 +5,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
+import ren.yale.java.annotation.AsyncDataSource;
 import ren.yale.java.annotation.AsyncService;
 import ren.yale.java.annotation.Service;
 import ren.yale.java.method.ClassInfo;
@@ -53,13 +54,6 @@ public abstract class AbstractSummerContainer {
 
     protected void autoWriedBean(ClassInfo classInfo) throws IllegalAccessException {
         for (Field declaredField : classInfo.getClazz().getDeclaredFields()) {
-            if (declaredField.getType() != AsyncService.class) {
-                continue;
-            }
-            Class generatorType = getGeneratorType(declaredField);
-            if (generatorType == null) {
-                continue;
-            }
             if (declaredField.isAnnotationPresent(Service.class)) {
                 Service service = declaredField.getAnnotation(Service.class);
                 JsonObject config = new JsonObject();
@@ -67,8 +61,14 @@ public abstract class AbstractSummerContainer {
                     config.put("name", service.value());
                 }
                 config.put("type", service.type());
-                declaredField.setAccessible(true);
-                declaredField.set(classInfo.getClazzObj(), AsyncService.create(discovery, config));
+                if (declaredField.getType() == AsyncService.class) {
+                    declaredField.setAccessible(true);
+                    declaredField.set(classInfo.getClazzObj(), AsyncService.create(discovery, config));
+                } else if (declaredField.getType() == AsyncDataSource.class) {
+                    declaredField.setAccessible(true);
+                    declaredField.set(classInfo.getClazzObj(), AsyncDataSource.create(discovery, config));
+                }
+
             }
         }
     }

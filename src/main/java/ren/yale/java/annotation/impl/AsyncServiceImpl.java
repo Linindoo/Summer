@@ -10,6 +10,7 @@ import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
 import ren.yale.java.annotation.AsyncService;
 
+
 public final class AsyncServiceImpl<T> extends AsyncService<T> {
     private static final Logger logger = LoggerFactory.getLogger(AsyncServiceImpl.class);
     protected ServiceDiscovery discovery;

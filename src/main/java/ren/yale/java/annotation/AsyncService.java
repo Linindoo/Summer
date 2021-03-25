@@ -22,6 +22,6 @@ public abstract class AsyncService<T> {
     }
 
     public static <T> AsyncService<T> create(ServiceDiscovery discovery, JsonObject config) {
-        return new AsyncServiceImpl<>(discovery, config);
+        return new AsyncServiceImpl<T>(discovery, config);
     }
 }
