@@ -5,7 +5,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 import io.vertx.servicediscovery.ServiceDiscovery;
 import io.vertx.servicediscovery.ServiceReference;
-import ren.yale.java.annotation.AsyncDataSource;
 import ren.yale.java.annotation.AsyncService;
 import ren.yale.java.annotation.Service;
 import ren.yale.java.method.ClassInfo;
@@ -64,11 +63,7 @@ public abstract class AbstractSummerContainer {
                 if (declaredField.getType() == AsyncService.class) {
                     declaredField.setAccessible(true);
                     declaredField.set(classInfo.getClazzObj(), AsyncService.create(discovery, config));
-                } else if (declaredField.getType() == AsyncDataSource.class) {
-                    declaredField.setAccessible(true);
-                    declaredField.set(classInfo.getClazzObj(), AsyncDataSource.create(discovery, config));
                 }
-
             }
         }
     }

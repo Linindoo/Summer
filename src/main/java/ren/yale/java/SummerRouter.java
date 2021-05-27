@@ -138,10 +138,7 @@ public class SummerRouter extends AbstractSummerContainer{
     }
 
     private Object covertType(Class type,String v) throws Exception{
-
-
         String typeName = type.getTypeName();
-
         if (type == String.class){
             return v;
         }
@@ -161,7 +158,6 @@ public class SummerRouter extends AbstractSummerContainer{
             return new JsonObject(v);
         }
         return null;
-
     }
     private Object getPathParamArg(RoutingContext routingContext, ArgInfo argInfo){
 
@@ -244,7 +240,6 @@ public class SummerRouter extends AbstractSummerContainer{
         return null;
     }
     private Object[] getArgs(RoutingContext routingContext,ClassInfo classInfo,MethodInfo methodInfo){
-
         Object[] objects = new Object[methodInfo.getArgInfoList().size()];
         int i =0;
         for (ArgInfo argInfo : methodInfo.getArgInfoList()) {
