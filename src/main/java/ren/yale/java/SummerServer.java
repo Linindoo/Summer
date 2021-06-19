@@ -18,6 +18,7 @@ public class SummerServer  {
     private int port = 0;
     private String host = "0.0.0.0";
     private ServiceDiscovery discovery;
+    private String contextPath;
 
 
     private SummerServer(String host,int port){
@@ -25,10 +26,11 @@ public class SummerServer  {
     }
 
     private SummerServer(String host, int port, VertxOptions options) {
-        this(host, port, options, null);
+        this(host, port, options, null,null, "/");
     }
 
-    private SummerServer(String host, int port, VertxOptions options, Vertx vertx) {
+    private SummerServer(String host, int port, VertxOptions options, Vertx vertx, Router router, String contextPath) {
+        this.contextPath = contextPath;
         if (vertx != null) {
             this.vertx = vertx;
         } else if (options != null) {
@@ -37,8 +39,12 @@ public class SummerServer  {
             this.vertx = Vertx.vertx();
         }
         this.discovery = ServiceDiscovery.create(vertx, new ServiceDiscoveryOptions().setBackendConfiguration(vertx.getOrCreateContext().config()));
-        this.router = Router.router(this.vertx);
-        this.summerRouter = new SummerRouter(router, discovery, vertx);
+        if (router == null) {
+            this.router = Router.router(this.vertx);
+        } else {
+            this.router = router;
+        }
+        this.summerRouter = new SummerRouter(this.router, discovery, vertx, contextPath);
         this.summerService = new SummerService(discovery, vertx);
         this.port = port;
         this.host = host;
@@ -46,7 +52,11 @@ public class SummerServer  {
     }
 
     public static SummerServer create(Vertx vertx) {
-        return new SummerServer("0.0.0.0",0,null,vertx);
+        return new SummerServer("0.0.0.0", 0, null, vertx, null, "");
+    }
+
+    public static SummerServer create(Vertx vertx, Router router, String contextPath) {
+        return new SummerServer("0.0.0.0", 0, null, vertx, router, contextPath);
     }
 
     private void init(){

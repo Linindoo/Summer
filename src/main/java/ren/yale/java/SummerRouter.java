@@ -39,14 +39,15 @@ public class SummerRouter extends AbstractSummerContainer{
     private static final Logger logger = LoggerFactory.getLogger(SummerRouter.class);
 
     private Router router;
-    private String contextPath = "";
+    private String contextPath;
     protected Map<Class<? extends Interceptor>, Interceptor> interceptorMap;
     protected Map<Class<? extends ResponseHandler>, ResponseHandler> responseHandlerMap;
 
 
-    public SummerRouter(Router router, ServiceDiscovery discovery, Vertx vertx) {
+    public SummerRouter(Router router, ServiceDiscovery discovery, Vertx vertx, String contextPath) {
         super(discovery, vertx);
         this.router = router;
+        this.contextPath = contextPath;
         this.interceptorMap = new HashMap<>();
         this.responseHandlerMap = new HashMap<>();
         this.init();
@@ -81,11 +82,18 @@ public class SummerRouter extends AbstractSummerContainer{
         return router;
     }
     private void init(){
-        router.route().handler(BodyHandler.create());
-        SessionHandler handler = SessionHandler.create(LocalSessionStore.create(vertx));
-        handler.setNagHttps(true);
-        router.route().handler(handler).failureHandler(x -> {
-            x.end("error");
+//        router.route().handler(BodyHandler.create());
+//        SessionHandler handler = SessionHandler.create(LocalSessionStore.create(vertx));
+//        router.route().handler(handler);
+//        handler.setNagHttps(true);
+        router.errorHandler(404,x->{
+            x.end(x.failure() != null ? x.failure().getMessage() : "404");
+        });
+        router.errorHandler(500,x->{
+            x.end(x.failure() != null ? x.failure().getMessage() : "500");
+        });
+        router.route().failureHandler(x->{
+            x.end(x.failure() != null ? x.failure().getMessage() : "fail");
         });
     }
     public void registerResource(Class clazz){
@@ -133,7 +141,6 @@ public class SummerRouter extends AbstractSummerContainer{
     }
 
     private String addContextPath(String path) {
-
         return contextPath + path;
     }
 
